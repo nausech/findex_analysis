@@ -1,7 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.impute import SimpleImputer
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -16,11 +15,6 @@ print(data.columns)
 threshold = 0.1 * len(data)
 nan_counts = data.isna().sum()
 data = data.loc[:, nan_counts <= threshold]
-
-# Imputar los valores faltantes en las columnas numéricas
-numeric_columns = data.select_dtypes(include=['float64', 'int64']).columns
-imputer = SimpleImputer(strategy='mean')
-data[numeric_columns] = imputer.fit_transform(data[numeric_columns])
 
 # Determinar el año con más registros
 most_common_year = data['year'].value_counts().idxmax()
@@ -43,12 +37,11 @@ print(pivoted_data.head())
 # Eliminar las columnas con más del 10% de valores NaN en el DataFrame pivotado
 pivoted_data = pivoted_data.loc[:, pivoted_data.isna().mean() <= 0.1]
 
-pivoted_data.to_excel('pivoted_data.xlsx', index=False)
+# Eliminar filas con valores faltantes
+pivoted_data = pivoted_data.dropna()
 
-# Imputar valores faltantes en el DataFrame pivotado
-numeric_features = pivoted_data.select_dtypes(include=['float64', 'int64']).columns
-imputer = SimpleImputer(strategy='mean')
-pivoted_data[numeric_features] = imputer.fit_transform(pivoted_data[numeric_features])
+# Guardar el DataFrame resultante en un archivo Excel
+pivoted_data.to_excel('pivoted_data.xlsx', index=False)
 
 # Seleccionar solo las columnas numéricas para el PCA (después de pivotar)
 numeric_features = pivoted_data.columns.difference(['country', 'year', 'type'])
@@ -87,3 +80,16 @@ explained_variance_df = pd.DataFrame({
 
 # Mostrar la varianza explicada por cada componente principal
 print(explained_variance_df)
+
+# Obtener los valores propios (autovalores)
+eigenvalues = pca.explained_variance_
+print(f'Valores Propios (Eigenvalues): {eigenvalues}')
+
+# Opcional: Crear un DataFrame para los valores propios
+eigenvalues_df = pd.DataFrame({
+    'Componente Principal': ['PC1', 'PC2'],
+    'Valores Propios': eigenvalues
+})
+
+# Mostrar los valores propios
+print(eigenvalues_df)
